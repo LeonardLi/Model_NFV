@@ -1,7 +1,8 @@
 package com.xiaode;
 
-import java.util.ArrayList;
-import java.util.List;
+import sun.applet.resources.MsgAppletViewer;
+
+import java.util.*;
 
 /**
  * Created by xiaode on 5/5/17.
@@ -10,11 +11,16 @@ public class Server {
     public enum VNF_STRATEGY{
         RANDOM,
         INTERLEAVE,
-        PREF
-
+        PREFFER
     }
 
-    private ArrayList<ArrayList<CPU>> physicalMachine;
+    private int nodes;
+    private int coresPerNode;
+    private VNF_STRATEGY deployStrategy = VNF_STRATEGY.INTERLEAVE;
+    private ArrayList<ArrayList<CPU>> physicalMachineCPUs;
+    private Map<CPU,VNF> runtimeVNFMap = new HashMap<CPU,VNF>();
+    private VirtualDeploymentUnit vdu;
+
     final int [][] latancyMatrix = new int[][]{
         {157,253,249,253},
         {246,158,245,246},
@@ -28,10 +34,12 @@ public class Server {
             {2739,2729,2746,3164},{2734,2739,2746,3165},{2725,2731,2740,3161},{2726,2733,2717,3157},{2724,2729,2739,3157},{2707,2733,2741,3159},{2734,2739,2747,3166},{2740,2739,2747,3167}
     };
 
-    private Server(){}
+    private Server(VirtualDeploymentUnit vdu_decriptor){
+        this.vdu = vdu_decriptor;
+    }
 
     public ArrayList<ArrayList<CPU>> getPhysicalMachine() {
-        return physicalMachine;
+        return physicalMachineCPUs;
     }
 
     public int[][] getBandwidthMatrix() {
@@ -43,40 +51,84 @@ public class Server {
         return latancyMatrix;
     }
 
-    public static Server build(){
-        return build(4,8);
-
+    public static Server build(VirtualDeploymentUnit vdu_decriptor){
+        return build(8,4,vdu_decriptor);
     }
 
-    public static Server build(int cores, int nodes){
-        Server s = new Server();
+    public static Server build(int cores, int nodes,VirtualDeploymentUnit vdu_decriptor){
+        Server s = new Server(vdu_decriptor);
         s.init(nodes,cores);
         return s;
     }
 
     public void init(int nodes, int cores){
-        physicalMachine = new ArrayList<>();
+
+        this.coresPerNode = cores;
+        this.nodes = nodes;
+
+        physicalMachineCPUs = new ArrayList<>();
         for (int i =  0 ; i < nodes; i++){
             ArrayList<CPU> socket = new ArrayList<>();
             for (int j = 0 ; j < cores ; j++){
-                socket.add(new CPU(j*(i+1)));
+                socket.add(new CPU(j + i*cores));
             }
-            physicalMachine.add(socket);
+            physicalMachineCPUs.add(socket);
         }
-        System.out.println("The machine inited with " + String.valueOf(physicalMachine.size()) +
-                " nodes and " + String.valueOf(physicalMachine.size()* physicalMachine.get(0).size())+ " cores");
-
-        initMatrix(nodes,cores);
+        System.out.println("The machine inited with " + String.valueOf(physicalMachineCPUs.size()) +
+                " nodes and " + String.valueOf(this.nodes * this.coresPerNode)+ " cores");
+        deployVNfs(VNF_STRATEGY.RANDOM);
+        //initMatrix(nodes,cores);
     }
 
-    public void deployVNfs(){
+    final public void deployVNfs(VNF_STRATEGY strategy){
+        switch (strategy){
+            case RANDOM:
+                deployRandom();
+                break;
+            case INTERLEAVE:
+                deployInterleave();
+                break;
+            case PREFFER:
+                deployPreffer();
+                break;
+        }
+    }
+    private void deployRandom(){
+        int totalCores = coresPerNode * nodes;
+        Random seed = new Random();
+        for (VNF_TYPE vnf: this.vdu.getVDU_Descriptor().keySet()) {
+            int amount = this.vdu.getVDU_Descriptor().get(vnf);
+            for(int i = 0; i < amount; i++){
+                VNF tempVNF = new VNF();
+                tempVNF.setId(i);
+                tempVNF.setType(vnf);
+                int cpuNo;
+                CPU cpu;
+                do {
+                     cpuNo = seed.nextInt(totalCores);
+                     cpu = getCPUById(cpuNo);
+                }while(this.runtimeVNFMap.get(cpu) != null);
+                tempVNF.setVcpuNumber(cpuNo);
+                this.runtimeVNFMap.put(cpu,tempVNF);
+            }
+        }
+
+        for (CPU cpu : this.runtimeVNFMap.keySet()){
+            System.out.println("VNF: "+this.runtimeVNFMap.get(cpu).getType()+this.runtimeVNFMap.get(cpu).getId()+" running on CPU:"+ cpu.getId());
+        }
+    }
+    private void deployInterleave(){
 
     }
-
+    private void deployPreffer(){
+    }
 
     private void initMatrix(int nodes, int cores){
         // should init from file
     }
 
-
+    private CPU getCPUById(int id){
+        if(id >= nodes * coresPerNode) throw new IllegalArgumentException();
+        return this.physicalMachineCPUs.get(id/coresPerNode).get(id%nodes);
+    }
 }
