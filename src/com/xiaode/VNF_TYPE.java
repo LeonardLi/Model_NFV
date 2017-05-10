@@ -6,5 +6,5 @@ package com.xiaode;
 public enum VNF_TYPE {
     ROUTER,
     SWITCH,
-
+    DEFAULT,
 }

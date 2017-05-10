@@ -46,10 +46,7 @@ public class Server {
         return bandwidthMatrix;
     }
 
-    public int[][] getLatancyMatrix() {
-
-        return latancyMatrix;
-    }
+    public int[][] getLatancyMatrix() {return latancyMatrix;}
 
     public static Server build(VirtualDeploymentUnit vdu_decriptor){
         return build(8,4,vdu_decriptor);
@@ -112,7 +109,6 @@ public class Server {
                 this.runtimeVNFMap.put(cpu,tempVNF);
             }
         }
-
         for (CPU cpu : this.runtimeVNFMap.keySet()){
             System.out.println("VNF: "+this.runtimeVNFMap.get(cpu).getType()+this.runtimeVNFMap.get(cpu).getId()+" running on CPU:"+ cpu.getId());
         }
