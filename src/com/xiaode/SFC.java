@@ -1,13 +1,13 @@
 package com.xiaode;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by xiaode on 5/5/17.
  */
 public class SFC {
-    private LinkedList<VNF_TYPE> SFCDescriptor;
+    private ArrayList<VNF_TYPE> SFCDescriptor;
     private SFC(){}
 
     public static SFC builder(List<String> descriptor){
@@ -18,16 +18,13 @@ public class SFC {
         return null;
     }
 
-    public LinkedList<VNF_TYPE> getSFCDescriptor() {
+    public ArrayList<VNF_TYPE> getSFCDescriptor() {
         return SFCDescriptor;
     }
 
-    public void setSFCDescriptor(LinkedList<VNF_TYPE> SFCDescriptor) {
-        this.SFCDescriptor = SFCDescriptor;
-    }
 
     private boolean init(List<String> descriptor){
-        SFCDescriptor = new LinkedList<>();
+        SFCDescriptor = new ArrayList<>();
         for ( String vnf: descriptor) {
             VNF_TYPE type = getType(vnf);
             SFCDescriptor.add(type);

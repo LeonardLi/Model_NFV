@@ -18,8 +18,13 @@ public class Server {
     private int coresPerNode;
     private VNF_STRATEGY deployStrategy = VNF_STRATEGY.INTERLEAVE;
     private ArrayList<ArrayList<CPU>> physicalMachineCPUs;
-    private Map<CPU,VNF> runtimeVNFMap = new HashMap<CPU,VNF>();
+    private Map<CPU,VNF> runtimeVNFMap = new HashMap<>();
+    private Map<VNF,CPU> runtimeBindMap = new HashMap<>();
+    private List<VNF> runningVNFs = new ArrayList<>();
     private VirtualDeploymentUnit vdu;
+
+
+
 
     final int [][] latancyMatrix = new int[][]{
         {157,253,249,253},
@@ -77,6 +82,10 @@ public class Server {
         //initMatrix(nodes,cores);
     }
 
+    /**
+     *
+     * @param strategy
+     */
     final public void deployVNfs(VNF_STRATEGY strategy){
         switch (strategy){
             case RANDOM:
@@ -89,6 +98,20 @@ public class Server {
                 deployPreffer();
                 break;
         }
+    }
+
+    /**
+     *
+     * @param sfc
+     * @return
+     */
+    final public  Map<Integer,VNF> getOptimumMapping(SFC sfc){
+        ArrayList<VNF_TYPE> descriptor = sfc.getSFCDescriptor();
+        for (VNF_TYPE type:descriptor) {
+            //core
+            
+        }
+        return null;
     }
     private void deployRandom(){
         int totalCores = coresPerNode * nodes;
@@ -106,16 +129,24 @@ public class Server {
                      cpu = getCPUById(cpuNo);
                 }while(this.runtimeVNFMap.get(cpu) != null);
                 tempVNF.setVcpuNumber(cpuNo);
+                this.runningVNFs.add(tempVNF);
                 this.runtimeVNFMap.put(cpu,tempVNF);
             }
         }
+        //init the binding map
+        for (CPU cpu :runtimeVNFMap.keySet()) {
+            runtimeBindMap.put(runtimeVNFMap.get(cpu), cpu);
+        }
+
         for (CPU cpu : this.runtimeVNFMap.keySet()){
             System.out.println("VNF: "+this.runtimeVNFMap.get(cpu).getType()+this.runtimeVNFMap.get(cpu).getId()+" running on CPU:"+ cpu.getId());
         }
     }
+
     private void deployInterleave(){
 
     }
+
     private void deployPreffer(){
     }
 
@@ -127,4 +158,6 @@ public class Server {
         if(id >= nodes * coresPerNode) throw new IllegalArgumentException();
         return this.physicalMachineCPUs.get(id/coresPerNode).get(id%nodes);
     }
+
+
 }
