@@ -107,12 +107,37 @@ public class Server {
      */
     final public  Map<Integer,VNF> getOptimumMapping(SFC sfc){
         ArrayList<VNF_TYPE> descriptor = sfc.getSFCDescriptor();
+        Map<Integer, VNF> result = new HashMap<>();
+
+        Integer nextCpuId = -1;
+        Integer preCpuId = -1;
+        Integer curCpuId = -1;
         for (VNF_TYPE type:descriptor) {
-            //core
-            
+            int optimalChose = Integer.MAX_VALUE;
+            VNF nextVNF = null;
+            for (VNF vnf : runningVNFs) {
+                if (vnf.getType() == type && vnf.isIdle) {
+                    //random pick the first vnf
+                    if(curCpuId < 0) {
+                        curCpuId = vnf.getVcpuNumber();
+                        preCpuId = curCpuId;
+                        vnf.setIdle(false);
+                        result.put(curCpuId,vnf);
+                        break;
+                    }
+                    curCpuId = vnf.getVcpuNumber();
+                    if (latancyMatrix[preCpuId/8][curCpuId/8] < optimalChose){
+                        optimalChose = latancyMatrix[preCpuId/8][curCpuId/8];
+                        nextCpuId = curCpuId;
+                        nextVNF = vnf;
+                    }
+                }
+            }
+            if(nextCpuId != -1) result.put(nextCpuId, nextVNF);
         }
-        return null;
+        return result;
     }
+
     private void deployRandom(){
         int totalCores = coresPerNode * nodes;
         Random seed = new Random();
@@ -127,17 +152,20 @@ public class Server {
                 do {
                      cpuNo = seed.nextInt(totalCores);
                      cpu = getCPUById(cpuNo);
-                }while(this.runtimeVNFMap.get(cpu) != null);
+                }while(this.runtimeVNFMap.containsKey(cpu));
                 tempVNF.setVcpuNumber(cpuNo);
                 this.runningVNFs.add(tempVNF);
                 this.runtimeVNFMap.put(cpu,tempVNF);
             }
         }
         //init the binding map
-        for (CPU cpu :runtimeVNFMap.keySet()) {
-            runtimeBindMap.put(runtimeVNFMap.get(cpu), cpu);
-        }
+//        for (CPU cpu :runtimeVNFMap.keySet()) {
+//            runtimeBindMap.put(runtimeVNFMap.get(cpu), cpu);
+//        }
 
+        for (VNF vnf: this.runningVNFs){
+            System.out.println("VNF: "+vnf.getType()+ vnf.getId() +" running on the CPU "+ vnf.getVcpuNumber());
+        }
         for (CPU cpu : this.runtimeVNFMap.keySet()){
             System.out.println("VNF: "+this.runtimeVNFMap.get(cpu).getType()+this.runtimeVNFMap.get(cpu).getId()+" running on CPU:"+ cpu.getId());
         }

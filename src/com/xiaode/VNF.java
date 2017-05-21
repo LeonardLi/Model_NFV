@@ -10,6 +10,22 @@ public class VNF {
     //the physical number this vnf has
     int vcpuNumber;
 
+    // if the VNF is running for some SFC
+    boolean isIdle  = true;
+
+    //the type
+    VNF_TYPE type;
+
+    public boolean isIdle() {
+        return isIdle;
+    }
+
+    public void setIdle(boolean idle) {
+        isIdle = idle;
+    }
+
+
+
     public int getId() {
         return id;
     }
@@ -34,8 +50,6 @@ public class VNF {
         this.type = type;
     }
 
-    //the type
-    VNF_TYPE type;
 
 
 
