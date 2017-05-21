@@ -18,7 +18,7 @@ public class Server {
     private int coresPerNode;
     private VNF_STRATEGY deployStrategy = VNF_STRATEGY.INTERLEAVE;
     private ArrayList<ArrayList<CPU>> physicalMachineCPUs;
-    private Map<CPU,VNF> runtimeVNFMap = new HashMap<>();
+    private Map<Integer,VNF> runtimeVNFMap = new HashMap<>();
     private Map<VNF,CPU> runtimeBindMap = new HashMap<>();
     private List<VNF> runningVNFs = new ArrayList<>();
     private VirtualDeploymentUnit vdu;
@@ -150,12 +150,12 @@ public class Server {
                 int cpuNo;
                 CPU cpu;
                 do {
-                     cpuNo = seed.nextInt(totalCores);
+                    cpuNo = seed.nextInt(totalCores);
                      cpu = getCPUById(cpuNo);
-                }while(this.runtimeVNFMap.containsKey(cpu));
+                }while(this.runtimeVNFMap.containsKey(cpuNo));
                 tempVNF.setVcpuNumber(cpuNo);
                 this.runningVNFs.add(tempVNF);
-                this.runtimeVNFMap.put(cpu,tempVNF);
+                this.runtimeVNFMap.put(cpu.getId(),tempVNF);
             }
         }
         //init the binding map
@@ -166,8 +166,8 @@ public class Server {
         for (VNF vnf: this.runningVNFs){
             System.out.println("VNF: "+vnf.getType()+ vnf.getId() +" running on the CPU "+ vnf.getVcpuNumber());
         }
-        for (CPU cpu : this.runtimeVNFMap.keySet()){
-            System.out.println("VNF: "+this.runtimeVNFMap.get(cpu).getType()+this.runtimeVNFMap.get(cpu).getId()+" running on CPU:"+ cpu.getId());
+        for (Integer id : this.runtimeVNFMap.keySet()){
+            System.out.println("VNF: "+this.runtimeVNFMap.get(id).getType()+this.runtimeVNFMap.get(id).getId()+" running on CPU:"+ id);
         }
     }
 
